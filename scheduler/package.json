@@ -1,0 +1,40 @@
+{
+  "name": "schedule",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run db:setup && next dev",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
+    "start": "next start",
+    "lint": "eslint",
+    "db:push": "npx prisma db push",
+    "db:seed": "npx tsx --require dotenv/config prisma/seed.ts",
+    "db:setup": "npm run db:push && npm run db:seed"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.15.15",
+    "@prisma/adapter-libsql": "6.19.0",
+    "@prisma/client": "6.19.0",
+    "dotenv": "^17.2.3",
+    "next": "16.0.6",
+    "prisma": "6.19.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.6",
+    "ignore-loader": "^0.1.2",
+    "tailwindcss": "^4",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,44 @@
+name: Deploy to Turso
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'prisma/schema.prisma'
+      - 'prisma/seed.ts'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: "file:./dev.db"
+
+      - name: Push schema to Turso
+        run: npx tsx scripts/push-schema.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+
+      - name: Seed database
+        run: npm run db:seed
+        env:
+          DATABASE_URL: "file:./dummy.db"
+          TURSO_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
