@@ -21,7 +21,7 @@ function getAvailabilityColor(unavailableCount: number): string {
     return "bg-emerald-500/50 hover:bg-emerald-400/50 border-emerald-400/30";
   } else if (unavailableCount <= 4) {
     return "bg-amber-500/60 hover:bg-amber-400/60 border-amber-400/30";
-  } else if (unavailableCount <= 5) {
+  } else if (unavailableCount <= 6) {
     return "bg-red-500/50 hover:bg-red-400/50 border-red-400/30";
   } else {
     return "bg-red-600/70 hover:bg-red-500/70 border-red-500/30";
@@ -366,11 +366,11 @@ export default function Calendar({
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-red-500/50 border border-red-400/30"></div>
-              <span className="text-gray-400">4-5 out</span>
+              <span className="text-gray-400">5-6 out</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-red-600/70 border border-red-500/30"></div>
-              <span className="text-gray-400">6+ out</span>
+              <span className="text-gray-400">All out</span>
             </div>
           </div>
         </div>
