@@ -3,7 +3,7 @@ generator client {
   previewFeatures = ["driverAdapters"]
 }
 
-// SQLite locally, Turso in production
+// SQLite locally, Turso in production.
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
