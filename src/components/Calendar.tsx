@@ -258,9 +258,7 @@ export default function Calendar({
       const dateEvents = eventsByDate[dateKey] || [];
       const hasEvents = dateEvents.length > 0;
 
-      const colorClass = hasEvents
-        ? "bg-gradient-to-br from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 border-yellow-400/50"
-        : getAvailabilityColor(unavailableCount);
+      const colorClass = getAvailabilityColor(unavailableCount);
 
       const isToday = formatDateKey(new Date()) === dateKey;
 
@@ -275,6 +273,7 @@ export default function Calendar({
             ${inSelection ? "ring-2 ring-white ring-offset-2 ring-offset-[#141414]" : ""}
             ${isStart || isEnd ? "ring-2 ring-red-500 ring-offset-2 ring-offset-[#141414]" : ""}
             ${isToday ? "ring-1 ring-white/50" : ""}
+            ${hasEvents && !inSelection && !isStart && !isEnd ? "event-border" : ""}
           `}
         >
 
@@ -516,7 +515,7 @@ export default function Calendar({
           onClick={() => setEventModalDate(null)}
         >
           <div
-            className="bg-[#1a1a1a] rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 border border-yellow-500/30 animate-[scaleIn_0.2s_ease-out]"
+            className="bg-[#1a1a1a] rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 border border-yellow-500/30 animate-[scaleIn_0.2s_ease-out] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-2xl font-bold mb-1 font-[family-name:var(--font-bebas-neue)] tracking-wide bg-gradient-to-r from-yellow-400 to-amber-500 bg-clip-text text-transparent">
@@ -564,12 +563,12 @@ export default function Calendar({
                 placeholder="Event name"
                 className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500/50"
               />
-              <div className="relative">
+              <div className="relative overflow-hidden rounded-lg">
                 <input
                   type="time"
                   value={newEventTime}
                   onChange={(e) => setNewEventTime(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-yellow-500/50"
+                  className="w-full min-w-0 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-yellow-500/50 box-border"
                 />
                 {!newEventTime && (
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
