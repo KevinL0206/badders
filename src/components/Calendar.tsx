@@ -16,7 +16,7 @@ interface CalendarProps {
 
 function getAvailabilityColor(unavailableCount: number): string {
   if (unavailableCount === 0) {
-    return "bg-emerald-600/80 hover:bg-emerald-500/80 border-emerald-500/30";
+    return "bg-green-500 hover:bg-green-400 border-green-400/50";
   } else if (unavailableCount <= 2) {
     return "bg-emerald-500/50 hover:bg-emerald-400/50 border-emerald-400/30";
   } else if (unavailableCount <= 4) {
@@ -353,7 +353,7 @@ export default function Calendar({
         <div className="px-6 py-4 bg-[#1a1a1a] border-t border-gray-800/50">
           <div className="flex flex-wrap gap-4 justify-center text-xs">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-emerald-600/80 border border-emerald-500/30"></div>
+              <div className="w-4 h-4 rounded bg-green-500 border border-green-400/50"></div>
               <span className="text-gray-400">All available</span>
             </div>
             <div className="flex items-center gap-2">
