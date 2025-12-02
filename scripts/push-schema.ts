@@ -30,6 +30,16 @@ CREATE TABLE IF NOT EXISTS "Unavailability" (
 CREATE UNIQUE INDEX IF NOT EXISTS "Unavailability_userId_date_key" ON "Unavailability"("userId", "date");
 
 CREATE INDEX IF NOT EXISTS "Unavailability_date_idx" ON "Unavailability"("date");
+
+CREATE TABLE IF NOT EXISTS "Event" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "name" TEXT NOT NULL,
+    "date" DATETIME NOT NULL,
+    "time" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS "Event_date_idx" ON "Event"("date");
 `;
 
 async function main() {

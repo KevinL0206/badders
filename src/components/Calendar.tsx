@@ -564,12 +564,19 @@ export default function Calendar({
                 placeholder="Event name"
                 className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500/50"
               />
-              <input
-                type="time"
-                value={newEventTime}
-                onChange={(e) => setNewEventTime(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500/50"
-              />
+              <div className="relative">
+                <input
+                  type="time"
+                  value={newEventTime}
+                  onChange={(e) => setNewEventTime(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-yellow-500/50"
+                />
+                {!newEventTime && (
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                    Select time
+                  </span>
+                )}
+              </div>
               <button
                 onClick={handleCreateEvent}
                 disabled={savingEvent || !newEventName || !newEventTime}
