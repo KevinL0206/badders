@@ -69,7 +69,7 @@ export default async function CalendarPage({ params }: PageProps) {
 
       <div className="relative z-10 py-8 px-4">
         {/* Header */}
-        <div className="max-w-4xl mx-auto mb-8">
+        <div className="max-w-4xl mx-auto mb-8 flex items-center justify-between">
           <Link
             href="/"
             className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors duration-300 group"
@@ -84,6 +84,21 @@ export default async function CalendarPage({ params }: PageProps) {
             </svg>
             <span className="text-sm uppercase tracking-widest">Switch Profile</span>
           </Link>
+
+          {/* Navigation Tabs */}
+          <nav className="flex items-center gap-1 bg-white/[0.03] rounded-full p-1">
+            <div className="px-5 py-2 text-sm text-white bg-white/10 rounded-full font-medium flex items-center gap-2">
+              <span className="w-2 h-2 bg-white/50 rounded-full" />
+              Calendar
+            </div>
+            <Link
+              href="/events"
+              className="px-5 py-2 text-sm text-gray-400 hover:text-white rounded-full transition-colors flex items-center gap-2"
+            >
+              <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+              Events
+            </Link>
+          </nav>
         </div>
 
         <Calendar

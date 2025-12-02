@@ -1,10 +1,16 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 interface UnavailableUser {
   id: number;
   name: string;
+}
+
+interface Event {
+  id: number;
+  name: string;
+  time: string;
 }
 
 interface CalendarProps {
@@ -21,7 +27,7 @@ function getAvailabilityColor(unavailableCount: number): string {
     return "bg-emerald-500/50 hover:bg-emerald-400/50 border-emerald-400/30";
   } else if (unavailableCount <= 4) {
     return "bg-amber-500/60 hover:bg-amber-400/60 border-amber-400/30";
-  } else if (unavailableCount <= 6) {
+  } else if (unavailableCount <= 5) {
     return "bg-red-500/50 hover:bg-red-400/50 border-red-400/30";
   } else {
     return "bg-red-600/70 hover:bg-red-500/70 border-red-500/30";
@@ -61,6 +67,19 @@ export default function Calendar({
   const [selectionEnd, setSelectionEnd] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedDateForModal, setSelectedDateForModal] = useState<string | null>(null);
+  const [eventsByDate, setEventsByDate] = useState<Record<string, Event[]>>({});
+  const [eventModalDate, setEventModalDate] = useState<string | null>(null);
+  const [newEventName, setNewEventName] = useState("");
+  const [newEventTime, setNewEventTime] = useState("");
+  const [savingEvent, setSavingEvent] = useState(false);
+
+  // Fetch events on mount
+  useEffect(() => {
+    fetch("/api/events")
+      .then((res) => res.json())
+      .then((data) => setEventsByDate(data.eventsByDate || {}))
+      .catch(console.error);
+  }, []);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -162,6 +181,56 @@ export default function Calendar({
     setSelectionEnd(null);
   };
 
+  const handleOpenEventModal = (dateKey: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEventModalDate(dateKey);
+    setNewEventName("");
+    setNewEventTime("");
+  };
+
+  const handleCreateEvent = async () => {
+    if (!eventModalDate || !newEventName || !newEventTime) return;
+
+    setSavingEvent(true);
+    try {
+      const response = await fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newEventName,
+          date: eventModalDate,
+          time: newEventTime,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEventsByDate(data.eventsByDate || {});
+        setNewEventName("");
+        setNewEventTime("");
+      }
+    } catch (error) {
+      console.error("Failed to create event:", error);
+    } finally {
+      setSavingEvent(false);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: number) => {
+    try {
+      const response = await fetch(`/api/events?id=${eventId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEventsByDate(data.eventsByDate || {});
+      }
+    } catch (error) {
+      console.error("Failed to delete event:", error);
+    }
+  };
+
   const formatDisplayDate = (dateKey: string) => {
     const date = new Date(dateKey + "T00:00:00");
     return date.toLocaleDateString("en-US", {
@@ -186,10 +255,12 @@ export default function Calendar({
       const isEnd = dateKey === selectionEnd;
       const unavailableUsers = unavailabilityByDate[dateKey] || [];
       const unavailableCount = unavailableUsers.length;
+      const dateEvents = eventsByDate[dateKey] || [];
+      const hasEvents = dateEvents.length > 0;
 
-      const colorClass = getAvailabilityColor(unavailableCount);
-      const displayUsers = unavailableUsers.slice(0, 3);
-      const extraCount = unavailableUsers.length - 3;
+      const colorClass = hasEvents
+        ? "bg-gradient-to-br from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 border-yellow-400/50"
+        : getAvailabilityColor(unavailableCount);
 
       const isToday = formatDateKey(new Date()) === dateKey;
 
@@ -206,15 +277,26 @@ export default function Calendar({
             ${isToday ? "ring-1 ring-white/50" : ""}
           `}
         >
+
           {/* Day number */}
-          <span className={`text-sm md:text-base font-medium ${isUnavailable ? "text-white" : "text-white/90"}`}>
+          <span className={`relative z-10 text-sm md:text-base font-medium ${isUnavailable ? "text-white" : "text-white/90"}`}>
             {day}
           </span>
+
+          {/* Event indicator - golden badge */}
+          {hasEvents && (
+            <div
+              className="absolute bottom-1 left-1 w-5 h-5 md:w-6 md:h-6 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center text-[10px] md:text-xs font-bold text-black shadow-lg shadow-yellow-500/50 cursor-pointer z-10"
+              onClick={(e) => handleOpenEventModal(dateKey, e)}
+            >
+              {dateEvents.length}
+            </div>
+          )}
 
           {/* Unavailable count indicator */}
           {unavailableCount > 0 && (
             <div
-              className="absolute bottom-1 right-1 w-5 h-5 md:w-6 md:h-6 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-[10px] md:text-xs font-bold text-white/90 border border-white/20"
+              className="absolute bottom-1 right-1 w-5 h-5 md:w-6 md:h-6 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-[10px] md:text-xs font-bold text-white/90 border border-white/20 z-10"
               onClick={(e) => handleViewUnavailable(dateKey, e)}
             >
               {unavailableCount}
@@ -327,12 +409,12 @@ export default function Calendar({
                 Clear
               </button>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3">
               {allSelectedAreUnavailable ? (
                 <button
                   onClick={() => handleSubmit(true)}
                   disabled={saving}
-                  className="flex-1 py-3 px-6 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 px-6 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Mark as Available
                 </button>
@@ -340,11 +422,21 @@ export default function Calendar({
                 <button
                   onClick={() => handleSubmit(false)}
                   disabled={saving}
-                  className="flex-1 py-3 px-6 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 px-6 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Mark as Unavailable
                 </button>
               )}
+              <button
+                onClick={() => {
+                  setEventModalDate(selectionStart);
+                  setNewEventName("");
+                  setNewEventTime("");
+                }}
+                className="w-full py-3 px-6 bg-gradient-to-r from-yellow-500 to-amber-600 text-black rounded-lg hover:from-yellow-400 hover:to-amber-500 transition-all duration-200 font-medium"
+              >
+                Add Event
+              </button>
             </div>
           </div>
         )}
@@ -366,11 +458,11 @@ export default function Calendar({
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-red-500/50 border border-red-400/30"></div>
-              <span className="text-gray-400">5-6 out</span>
+              <span className="text-gray-400">4-5 out</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-red-600/70 border border-red-500/30"></div>
-              <span className="text-gray-400">All out</span>
+              <span className="text-gray-400">6+ out</span>
             </div>
           </div>
         </div>
@@ -381,7 +473,7 @@ export default function Calendar({
         <p>Click a date to select • Click another to set a range • Tap the number to see who&apos;s out</p>
       </div>
 
-      {/* Modal */}
+      {/* Unavailable Modal */}
       {selectedDateForModal && (
         <div
           className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]"
@@ -410,6 +502,86 @@ export default function Calendar({
             <button
               onClick={() => setSelectedDateForModal(null)}
               className="w-full py-3 px-4 bg-white text-black rounded-lg hover:bg-gray-200 transition-colors font-medium"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Event Modal */}
+      {eventModalDate && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]"
+          onClick={() => setEventModalDate(null)}
+        >
+          <div
+            className="bg-[#1a1a1a] rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 border border-yellow-500/30 animate-[scaleIn_0.2s_ease-out]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-2xl font-bold mb-1 font-[family-name:var(--font-bebas-neue)] tracking-wide bg-gradient-to-r from-yellow-400 to-amber-500 bg-clip-text text-transparent">
+              Events
+            </h3>
+            <p className="text-gray-400 mb-6 text-sm">
+              {formatModalDate(eventModalDate)}
+            </p>
+
+            {/* Existing events */}
+            {(eventsByDate[eventModalDate] || []).length > 0 && (
+              <ul className="space-y-3 mb-6">
+                {(eventsByDate[eventModalDate] || []).map((event) => (
+                  <li key={event.id} className="flex items-center justify-between gap-3 bg-gradient-to-r from-yellow-500/10 to-amber-500/10 rounded-lg p-3 border border-yellow-500/20">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center text-sm font-bold text-black shadow-lg shadow-yellow-500/30">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-white font-medium">{event.name}</p>
+                        <p className="text-yellow-400/80 text-sm">{event.time}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteEvent(event.id)}
+                      className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Add new event form */}
+            <div className="space-y-3 mb-6">
+              <input
+                type="text"
+                value={newEventName}
+                onChange={(e) => setNewEventName(e.target.value)}
+                placeholder="Event name"
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500/50"
+              />
+              <input
+                type="time"
+                value={newEventTime}
+                onChange={(e) => setNewEventTime(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500/50"
+              />
+              <button
+                onClick={handleCreateEvent}
+                disabled={savingEvent || !newEventName || !newEventTime}
+                className="w-full py-3 px-4 bg-gradient-to-r from-yellow-500 to-amber-600 text-black rounded-lg hover:from-yellow-400 hover:to-amber-500 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingEvent ? "Adding..." : "Add Event"}
+              </button>
+            </div>
+
+            <button
+              onClick={() => setEventModalDate(null)}
+              className="w-full py-3 px-4 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
             >
               Close
             </button>
